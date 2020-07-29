@@ -2,13 +2,10 @@
   <section class="table-box">
     <el-table
       ref="tableNode"
-      v-loading="isLoading && !isScroll"
+      v-loading="isLoading && (!isScroll || pageData.page == 1)"
       :data="renderData"
-      border
-      fit
-      highlight-current-row
+      v-bind="tableProps"
       class="public-table"
-      header-row-class-name="table-header"
       @row-click="(row, column, event) => $emit('row-click', row, column, event)"
       @selection-change="selection => $emit('selection-change', selection)"
       @sort-change="sortInfo => $emit('sort-change', sortInfo)"
@@ -17,7 +14,7 @@
     >
       <slot name="prepend" />
       <el-table-column
-        v-for="(col, index) in cols"
+        v-for="(col, index) in columns"
         :key="index"
         :prop="col.prop"
         :label="col.label"
@@ -26,7 +23,7 @@
         :min-width="col.minWidth || colMinWidth"
         align="center"
       >
-        <slot :name="col.prop" :col="col" slot-scope="scope">
+        <slot :name="col.prop" :col="col" slot-scope="scope" :row="scope.row">
           <div v-if="col.type === 'dropdown'">
             <el-dropdown
               v-if="scope.row[`_${col.prop}`].options && scope.row[`_${col.prop}`].options.length"
@@ -49,9 +46,9 @@
             </el-dropdown>
             <span v-else>-</span>
           </div>
-          <div v-if="col.type === 'buttons'" class="cell-buttons">
+          <div v-if="col.type === 'buttons'">
             <el-button
-              :size="button.size || 'mini'"
+              :size="button.size"
               :class="button.class"
               v-for="(button, index) in scope.row[`_${col.prop}`].buttons"
               :key="index"
@@ -68,9 +65,14 @@
             v-model="scope.row[`_${col.prop}`].value"
             @change="scope.row[`_${col.prop}`].handler && scope.row[`_${col.prop}`].handler(scop.row)"
           />
-          <el-tag v-else-if="col.type === 'tag'" size="small" :type="scope.row[`_${col.prop}`].type">{{
-            scope.row[`_${col.prop}`].value
-          }}</el-tag>
+          <el-tag
+            v-else-if="col.type === 'tag'"
+            :size="scope.row[`_${col.prop}`].size || 'small'"
+            :effect="scope.row[`_${col.prop}`].effect"
+            :hit="scope.row[`_${col.prop}`].hit"
+            :type="scope.row[`_${col.prop}`].type"
+            >{{ scope.row[`_${col.prop}`].value }}</el-tag
+          >
           <a
             v-else-if="col.type === 'link' && scope.row[`_${col.prop}`].value"
             class="cell-link"
@@ -86,9 +88,15 @@
       </el-table-column>
       <slot name="append" />
       <div slot="append" v-if="isScroll">
-        <div class="load-more" v-if="pageData.hasNextPage && !isLoading"><span class="load-more-text" @click="$emit('onNext')">点击加载更多</span></div>
-        <div class="load-more" v-else-if="pageData.hasNextPage && isLoading"><span  class="load-more-text"><i class="el-icon-loading"></i>正在加载</span></div>
-        <div class="load-more" v-else-if="!isLoading"><span class="load-more-text" >没有更多了</span></div>
+        <div class="load-more" v-if="pageData.hasNextPage && !isLoading">
+          <span class="load-more-text" @click="() => $emit('onNext')">点击加载更多</span>
+        </div>
+        <div class="load-more" v-else-if="pageData.hasNextPage && isLoading && !!renderData.length">
+          <span class="load-more-text"><i class="el-icon-loading"></i>正在加载</span>
+        </div>
+        <div class="load-more" v-else-if="!isLoading && !!renderData.length">
+          <span class="load-more-text">没有更多了</span>
+        </div>
       </div>
     </el-table>
     <template v-if="!isScroll">
@@ -110,13 +118,19 @@
         <el-button-group>
           <el-button
             type="primary"
+            size="medium"
             icon="el-icon-arrow-left"
             :disabled="!pageData.hasPrevPage || isLoading"
             @click="() => $emit('onPrev')"
             >上一页</el-button
           >
-          <el-button type="text" class="page" disabled>{{ pageData.page }}</el-button>
-          <el-button type="primary" :disabled="!pageData.hasNextPage || isLoading" @click="() => $emit('onNext')">
+          <el-button type="text" size="medium" class="page" disabled>{{ pageData.page }}</el-button>
+          <el-button
+            type="primary"
+            size="medium"
+            :disabled="!pageData.hasNextPage || isLoading"
+            @click="() => $emit('onNext')"
+          >
             下一页
             <i class="el-icon-arrow-right el-icon--right" />
           </el-button>
@@ -135,15 +149,26 @@ export default class PublicTable extends Vue {
   /** table list 数据 */
   @Prop({ type: Array, default: () => [] }) data!: any[]
   /** table cols 数据 */
-  @Prop({ type: Array, default: () => [] }) cols!: IColumnItem[]
+  @Prop({ type: Array, default: () => [] }) columns!: IColumnItem[]
   /** 是否加载中 */
   @Prop({ type: Boolean, default: false }) isLoading!: boolean
   /** 是否显示分页 */
   @Prop({ type: Boolean, default: true }) isPagination!: boolean
   /** col 最小宽度 */
-  @Prop({ type: [String, Number], default: '100' }) colMinWidth!: string | number
+  @Prop({ type: [String, Number] }) colMinWidth!: string | number
   /** 是否上拉加载 与分页互斥 上拉加载优先级高 */
   @Prop({ type: Boolean, default: false }) isScroll!: boolean
+  /** tableProps */
+  @Prop({
+    type: Object,
+    default: () => ({
+      border: true,
+      'highlight-current-row': false,
+      'header-row-class-name': 'table-header',
+    }),
+  })
+  tableProps!: object
+
   /** 分页数据 */
   @Prop({
     type: Object,
@@ -166,7 +191,7 @@ export default class PublicTable extends Vue {
       this.renderData = []
     } else {
       const renderData: any[] = this._deepClone(data)
-      this.cols.forEach(col => {
+      this.columns.forEach(col => {
         if (!col.formatter) return
         renderData.forEach((item: any) => {
           item[`_${col.prop}`] = col.formatter!(item[col.prop], item)
@@ -206,44 +231,39 @@ export default class PublicTable extends Vue {
 }
 </script>
 
-<style lang="scss">
-.public-table {
-  width: 100%;
-  .table-header th {
-    background-color: #f2f2f2;
-    font-size: 14px;
-    color: #666666;
-  }
-  .cell-buttons {
-    .el-button {
-      min-width: 50px;
-      margin: 2px;
-      font-weight: bold;
+<style lang="scss" scpoed>
+.table-box {
+  .public-table {
+    width: 100%;
+    .table-header th {
+      background-color: #f2f2f2;
+      font-size: 14px;
+      color: #999999;
+    }
+    .load-more {
+      height: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #999999;
+      .load-more-text {
+        line-height: 30px;
+        padding: 0 20px;
+        cursor: pointer;
+      }
     }
   }
-  .load-more {
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #999999;
-    .load-more-text {
-      line-height: 30px;
-      padding: 0 20px;
-      cursor: pointer;
-    }
+  .public-pagination.el-pagination {
+    text-align: right;
+    padding: 10px;
   }
-}
-.public-pagination {
-  text-align: right;
-  padding: 20px 10px;
-}
-.simple-pagination {
-  padding: 10px;
-  vertical-align: middle;
-  text-align: right;
-  .page.el-button {
-    width: 40px !important;
+  .simple-pagination {
+    padding: 10px;
+    vertical-align: middle;
+    text-align: right;
+    .page.el-button {
+      width: 40px !important;
+    }
   }
 }
 </style>

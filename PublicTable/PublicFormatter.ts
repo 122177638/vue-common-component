@@ -1,33 +1,44 @@
-import { formatNumber, formatDate } from '@/utils/utils'
 import { ColumnOptionFormatter, ButtonOptionItem, DropdownOptionItem } from './PublicTable'
-export function createMapFormatter(map: { [key: string]: any }): ColumnOptionFormatter {
-  return (value: any, item: any) => ({
-    value: map[value] || '-',
-  })
+import { formatDate, formatNumber } from '@/utils'
+export function ColumnMapFormatter(map: { [key: string]: any }): ColumnOptionFormatter {
+  return (value: any, item: any) => {
+    const type = Object.prototype.toString.call(map)
+    let result
+    if (type === '[object Map]') {
+      result = map.get(value)
+    } else {
+      result = map[value]
+    }
+    if (Object.prototype.toString.call(result) === '[object Object]') {
+      return result
+    }
+    return {
+      value: result || '-',
+    }
+  }
 }
 
-export function createButtonsFormatter(buttons: ButtonOptionItem[]): ColumnOptionFormatter {
+export function ColumnButtonsFormatter(buttons: ButtonOptionItem[]): ColumnOptionFormatter {
   return (_: any, item: any) => ({
     value: _,
     buttons: buttons.filter(b => !b.filter || b.filter(item)),
   })
 }
 
-export function createOptionsFormatter(dropdowns: DropdownOptionItem[]): ColumnOptionFormatter {
+export function ColumnOptionsFormatter(dropdowns: DropdownOptionItem[]): ColumnOptionFormatter {
   return (_: any, item: any) => ({
     value: _,
     options: dropdowns.filter(b => !b.filter || b.filter(item)),
   })
 }
 
-export const DateFormatter: ColumnOptionFormatter = (value: number, item: any) => ({ value: formatDate(value) })
+export const ColumnDateFormatter: ColumnOptionFormatter = (value: number, item: any) => ({ value: formatDate(value) })
 
-export const MoneyNumberFormatter: ColumnOptionFormatter = (value: number | string) => ({
+export const ColumnMoneyNumberFormatter: ColumnOptionFormatter = (value: number | string) => ({
   value: value === '' ? '-' : formatNumber(value),
 })
 
-export function statusFormatter(mapData: any): ColumnOptionFormatter {
-  return (value, _item) => ({
-    value: mapData[value],
-  })
-}
+export const ColumnPositiveAndNegativeFormatter = (value: any) => ({
+  value: /[\d.]+/.test(String(value)) ? formatNumber(value, 2) : value,
+  class: Number(value) >= 0 ? 'win' : 'lose',
+})

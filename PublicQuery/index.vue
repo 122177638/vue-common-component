@@ -1,11 +1,6 @@
 <template>
-  <section class="query-box">
-    <el-form
-      ref="form"
-      class="query-form"
-      :label-width="labelWidth"
-      :model="_queryParams"
-    >
+  <section :class="[{ 'inline-box': inline }, 'query-box']">
+    <el-form ref="form" class="query-form" :label-width="labelWidth" :inline="inline" :model="_queryParams">
       <slot name="prepend" />
       <template v-for="(item, index) in itemsSync">
         <!-- date 选择框 -->
@@ -13,7 +8,7 @@
           v-if="item.type === 'date'"
           :key="index"
           class="query-form-item"
-          :style="`width:${item.width && item.width + 'px' || 'auto'}`"
+          :style="`width:${(item.width && item.width + 'px') || 'auto'}`"
           :label="item.label"
         >
           <el-date-picker
@@ -37,7 +32,7 @@
           v-if="item.type === 'select'"
           :key="index"
           class="query-form-item"
-          :style="`width:${item.width ? item.width+ 'px' : 'auto'}`"
+          :style="`width:${item.width ? item.width + 'px' : 'auto'}`"
           :label="item.label"
         >
           <el-select
@@ -48,35 +43,18 @@
             style="width:100%"
             @change="(...args) => handleChange(item.key, ...args)"
           >
-            <el-option
-              v-for="opt in item.options"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
+            <el-option v-for="opt in item.options" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </el-form-item>
 
         <!-- dropdown 选择框 -->
-        <el-form-item
-          v-if="item.type === 'dropdown'"
-          :key="index"
-          class="query-form-item"
-          :label="item.label"
-        >
-          <el-dropdown
-            class="query-dropdown"
-            @command="(...args) => handleCommand(item.key, ...args)"
-          >
+        <el-form-item v-if="item.type === 'dropdown'" :key="index" class="query-form-item" :label="item.label">
+          <el-dropdown class="query-dropdown" @command="(...args) => handleCommand(item.key, ...args)">
             <span class="el-dropdown-link">
               <span>{{ _queryParams[item.key] }}</span> <i class="el-icon-arrow-down el-icon--right" />
             </span>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item
-                v-for="o in item.options"
-                :key="o.value"
-                :command="o.value"
-              >
+              <el-dropdown-item v-for="o in item.options" :key="o.value" :command="o.value">
                 {{ o.value }}
               </el-dropdown-item>
             </el-dropdown-menu>
@@ -87,7 +65,7 @@
         <el-form-item
           v-if="item.type === 'input'"
           :key="index"
-          :style="`width:${item.width ? item.width+ 'px' : 'auto'}`"
+          :style="`width:${item.width ? item.width + 'px' : 'auto'}`"
           class="query-form-item"
           :label="item.label"
         >
@@ -103,29 +81,17 @@
       </template>
       <slot />
       <!-- 按钮集合 可slot追加 -->
-      <el-form-item
-        v-if="_showSearch || _showDownload || $slots.button"
-        class="query-form-item btn-box"
-      >
-        <el-button
-          v-if="_showSearch || !isWatcher"
-          type="primary"
-          icon="el-icon-search"
-          @click="onQuery"
-        >
-          搜索
+      <el-form-item v-if="_showSearch || _showDownload || $slots.button" class="query-form-item btn-box">
+        <el-button v-if="_showSearch || !isWatcher" type="primary" plain icon="el-icon-search" @click="onQuery">
+          查询
         </el-button>
-        <el-button
-          v-if="_showDownload"
-          icon="el-icon-download"
-          @click="() => $emit('onDownload')"
-        >
+        <el-button v-if="_showDownload" plain icon="el-icon-download" @click="() => $emit('onDownload')">
           下载
         </el-button>
         <slot name="button" />
       </el-form-item>
       <!-- 向后追加 -->
-      <slot name="append"/>
+      <slot name="append" />
     </el-form>
   </section>
 </template>
@@ -140,12 +106,13 @@ const VALUE_CACHE_MAP: any = {}
   components: {},
 })
 export default class PublicQuery extends Vue {
-  @Prop({ type: Array }) items!: IQueryItem[]
+  @Prop({ type: Array }) queryItems!: IQueryItem[]
   @Prop({ type: Object }) value!: any
   /** 开启下载按钮 */
   @Prop({ type: [Boolean, Function], default: false }) showDownload!: Boolean | Function
   @Prop({ type: [Boolean, Function], default: true }) showSearch!: Boolean | Function
   @Prop({ type: String }) labelWidth?: string
+  @Prop({ type: Boolean, default: false }) inline?: boolean
   /** 是否触发所有参数变化执行change */
   @Prop({ type: Boolean, default: true }) isWatcher?: boolean
   /** 是否初始化完成 */
@@ -166,7 +133,7 @@ export default class PublicQuery extends Vue {
   }
 
   private get itemsSync() {
-    const items = this._clone(this.items)
+    const items = this._clone(this.queryItems)
     const promiseMap = new Map()
     items.forEach((formItem: IQueryItem) => {
       if (formItem.request) {
@@ -244,7 +211,7 @@ export default class PublicQuery extends Vue {
   }
 
   private cacheSelection(key: string, value: any) {
-    const formItem = this.items.find(item => item.key === key)
+    const formItem = this.queryItems.find(item => item.key === key)
     if (formItem && formItem.cacheKey) {
       VALUE_CACHE_MAP[formItem.cacheKey] = value
     }
@@ -307,14 +274,18 @@ export default class PublicQuery extends Vue {
 
 <style lang="scss" scpoed>
 .query-box {
+  padding: 0 20px 0;
+  &.inline-box {
+    padding: 20px 20px 0;
+  }
   .query-form-item {
     margin: 0 20px 22px 0;
-    display: inline-block;
+    display: inline-flex;
     &.btn-box {
       width: auto;
     }
-    .el-range-separator{
-      width: auto
+    .el-range-separator {
+      width: auto;
     }
   }
   .el-dropdown-link {

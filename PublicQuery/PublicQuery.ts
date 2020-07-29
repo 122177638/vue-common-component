@@ -2,13 +2,22 @@ import { DatePickerOptions } from 'element-ui/types/date-picker'
 
 /** 当前表单支持的类型 elementui类型 */
 export type TFormItemType = 'date' | 'select' | 'input' | 'dropdown' | string
-export type TDateType = 'year' | 'month' | 'dates' | 'week' | 'datetime' | 'date' | 'daterange' | 'monthrange' | 'datetimerange'
+export type TDateType =
+  | 'year'
+  | 'month'
+  | 'dates'
+  | 'week'
+  | 'datetime'
+  | 'date'
+  | 'daterange'
+  | 'monthrange'
+  | 'datetimerange'
 export interface IOption {
   label: string
   value: string | number
 }
 
-export interface IFormItem extends IQueryDateModel, IQuerySelectModel{
+export interface IQueryItem extends IQueryDateModel, IQuerySelectModel {
   label?: string
   /** 表单name值 */
   key: string
