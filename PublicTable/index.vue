@@ -31,7 +31,8 @@
               @command="onChooseOperate"
             >
               <el-button type="primary" size="small">
-                {{ scope.row[`_${col.prop}`].label || '操作' }}<i class="el-icon-arrow-down el-icon--right" />
+                {{ scope.row[`_${col.prop}`].label || '操作' }}
+                <i class="el-icon-arrow-down el-icon--right" aria-hidden="true" />
               </el-button>
               <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item
@@ -89,10 +90,10 @@
       <slot name="append" />
       <div slot="append" v-if="isScroll">
         <div class="load-more" v-if="pageData.hasNextPage && !isLoading">
-          <span class="load-more-text" @click="() => $emit('onNext')">点击加载更多</span>
+          <span class="load-more-text" @click="() => $emit('on-next')">点击加载更多</span>
         </div>
         <div class="load-more" v-else-if="pageData.hasNextPage && isLoading && !!renderData.length">
-          <span class="load-more-text"><i class="el-icon-loading"></i>正在加载</span>
+          <span class="load-more-text"><i class="el-icon-loading" aria-hidden="true"></i>正在加载</span>
         </div>
         <div class="load-more" v-else-if="!isLoading && !!renderData.length">
           <span class="load-more-text">没有更多了</span>
@@ -109,9 +110,9 @@
         background
         class="public-pagination"
         layout="prev, pager, next"
-        @current-change="() => $emit('onQuery')"
-        @prev-click="() => $emit('onPrev')"
-        @next-click="() => $emit('onNext')"
+        @current-change="() => $emit('on-query')"
+        @prev-click="() => $emit('on-prev')"
+        @next-click="() => $emit('on-next')"
       />
 
       <div v-else-if="isPagination && (pageData.hasNextPage || pageData.hasPrevPage)" class="simple-pagination">
@@ -121,7 +122,7 @@
             size="medium"
             icon="el-icon-arrow-left"
             :disabled="!pageData.hasPrevPage || isLoading"
-            @click="() => $emit('onPrev')"
+            @click="() => $emit('on-prev')"
             >上一页</el-button
           >
           <el-button type="text" size="medium" class="page" disabled>{{ pageData.page }}</el-button>
@@ -129,10 +130,10 @@
             type="primary"
             size="medium"
             :disabled="!pageData.hasNextPage || isLoading"
-            @click="() => $emit('onNext')"
+            @click="() => $emit('on-next')"
           >
             下一页
-            <i class="el-icon-arrow-right el-icon--right" />
+            <i class="el-icon-arrow-right el-icon--right" aria-hidden="true" />
           </el-button>
         </el-button-group>
       </div>
@@ -185,7 +186,7 @@ export default class PublicTable extends Vue {
   pageData!: IPageData
   protected renderData: any[] = []
 
-  @Watch('data', { deep: true })
+  @Watch('data', { deep: true, immediate: true })
   private onDataChanged(data: any) {
     if (!data.length) {
       this.renderData = []

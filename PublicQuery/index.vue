@@ -51,7 +51,8 @@
         <el-form-item v-if="item.type === 'dropdown'" :key="index" class="query-form-item" :label="item.label">
           <el-dropdown class="query-dropdown" @command="(...args) => handleCommand(item.key, ...args)">
             <span class="el-dropdown-link">
-              <span>{{ _queryParams[item.key] }}</span> <i class="el-icon-arrow-down el-icon--right" />
+              <span>{{ _queryParams[item.key] }}</span>
+              <i class="el-icon-arrow-down el-icon--right" aria-hidden="true" />
             </span>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item v-for="o in item.options" :key="o.value" :command="o.value">

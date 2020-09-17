@@ -1,4 +1,4 @@
-import { Vue, Component, Watch } from 'vue-property-decorator'
+import { Vue, Component } from 'vue-property-decorator'
 import { IColumnItem } from './PublicTable'
 import { IQueryItem } from '../PublicQuery/PublicQuery'
 import { formatDate } from '@/utils'
