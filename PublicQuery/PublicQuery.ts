@@ -1,7 +1,14 @@
+/*
+ * @Author: Anles💯
+ * @Date: 2020-09-23 15:24:16
+ * @LastEditors: Anles💯
+ * @LastEditTime: 2020-09-25 11:08:30
+ * @Description: 👉
+ */
 import { DatePickerOptions } from 'element-ui/types/date-picker'
 
 /** 当前表单支持的类型 elementui类型 */
-export type TFormItemType = 'date' | 'select' | 'input' | 'dropdown' | string
+export type TFormItemType = 'date' | 'select' | 'input' | 'dropdown' | 'custom'
 export type TDateType =
   | 'year'
   | 'month'

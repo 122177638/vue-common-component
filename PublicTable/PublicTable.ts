@@ -1,3 +1,10 @@
+/*
+ * @Author: Anles💯
+ * @Date: 2020-09-23 15:24:16
+ * @LastEditors: Anles💯
+ * @LastEditTime: 2020-09-25 14:57:47
+ * @Description: 👉
+ */
 export * from './PublicFormatter'
 export const enum ColumnType {
   BUTTONS = 'buttons',
@@ -7,7 +14,8 @@ export const enum ColumnType {
   TAG = 'tag',
 }
 type ColSortable = boolean | 'custom'
-type ElementButtonType = 'primary' | 'success' | 'info' | 'warning' | 'danger' | 'text'
+type ElementStyleType = 'primary' | 'success' | 'info' | 'warning' | 'danger'
+type ElementButtonType = ElementStyleType | 'text'
 
 export type ColumnOptionFormatter = (value: any, item: any, ...args: any[]) => FormatedCellData
 
@@ -24,7 +32,11 @@ type FormatedDropdownCellData = {
 }
 type FormatedLinkCellData = {
   value: string | number
-  label: string
+  type: ElementStyleType
+  underline: boolean
+  disabled: boolean
+  href: string
+  icon: string
 }
 type FormatedSwitchCellData = {
   value: string | number | boolean
@@ -32,7 +44,7 @@ type FormatedSwitchCellData = {
 }
 type FormatedTagCellData = {
   value: string | number | boolean
-  type?: ElementButtonType
+  type?: ElementStyleType
   color?: string
   effect?: 'dark' | 'light' | 'plain'
   hit?: boolean

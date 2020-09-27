@@ -3,6 +3,17 @@
     <el-form ref="form" class="query-form" :label-width="labelWidth" :inline="inline" :model="_queryParams">
       <slot name="prepend" />
       <template v-for="(item, index) in itemsSync">
+        <!-- 自定义 -->
+        <el-form-item
+          v-if="item.type === 'custom'"
+          :key="index"
+          :style="`width:${item.width ? item.width + 'px' : 'auto'}`"
+          class="query-form-item"
+          :label="item.label"
+        >
+          <slot :name="item.key" v-bind="{ row: item, data: _queryParams }"></slot>
+        </el-form-item>
+
         <!-- date 选择框 -->
         <el-form-item
           v-if="item.type === 'date'"
@@ -40,7 +51,7 @@
             :placeholder="item.placeholder"
             :clearable="item.clearable"
             class="query-select"
-            style="width:100%"
+            style="width: 100%"
             @change="(...args) => handleChange(item.key, ...args)"
           >
             <el-option v-for="opt in item.options" :key="opt.value" :label="opt.label" :value="opt.value" />
@@ -83,10 +94,10 @@
       <slot />
       <!-- 按钮集合 可slot追加 -->
       <el-form-item v-if="_showSearch || _showDownload || $slots.button" class="query-form-item btn-box">
-        <el-button v-if="_showSearch || !isWatcher" type="primary" plain icon="el-icon-search" @click="onQuery">
+        <el-button v-if="_showSearch || !isWatcher" type="primary" icon="el-icon-search" @click="onQuery">
           查询
         </el-button>
-        <el-button v-if="_showDownload" plain icon="el-icon-download" @click="() => $emit('onDownload')">
+        <el-button v-if="_showDownload" icon="el-icon-download" type="success" @click="() => $emit('download')">
           下载
         </el-button>
         <slot name="button" />
@@ -153,7 +164,7 @@ export default class PublicQuery extends Vue {
       }
     })
     /** 确保异步任务全部完成后执行 initChange */
-    Promise.all([...promiseMap.values()]).then(payload => {
+    Promise.all([...promiseMap.values()]).then((payload) => {
       Array.from(promiseMap.keys()).map((fid: string, index: number) => {
         items.forEach((formItem: IQueryItem) => {
           if (formItem._fid === fid) {
@@ -163,12 +174,12 @@ export default class PublicQuery extends Vue {
             if (formItem.type === 'select' || formItem.type === 'dropdown') {
               this.$set(formItem, 'options', options)
               const defaultValue = this._queryParams[formItem.key]
-              if (defaultValue && !options.some(o => o.value === defaultValue)) {
+              if (defaultValue && !options.some((o) => o.value === defaultValue)) {
                 this._queryParams[formItem.key] = undefined
               }
               if (!defaultValue && options.length > 0) {
                 const cacheValue = VALUE_CACHE_MAP[formItem.cacheKey!]
-                if (cacheValue && options.some(o => o.value === cacheValue)) {
+                if (cacheValue && options.some((o) => o.value === cacheValue)) {
                   this._queryParams[formItem.key] = cacheValue
                 } else if (formItem.autoSelect) {
                   this._queryParams[formItem.key] = options[0].value || ''
@@ -212,7 +223,7 @@ export default class PublicQuery extends Vue {
   }
 
   private cacheSelection(key: string, value: any) {
-    const formItem = this.queryItems.find(item => item.key === key)
+    const formItem = this.queryItems.find((item) => item.key === key)
     if (formItem && formItem.cacheKey) {
       VALUE_CACHE_MAP[formItem.cacheKey] = value
     }
@@ -245,11 +256,7 @@ export default class PublicQuery extends Vue {
   }
 
   private _getFid(length: any) {
-    return Number(
-      Math.random()
-        .toString()
-        .substr(3, length) + Date.now(),
-    ).toString(36)
+    return Number(Math.random().toString().substr(3, length) + Date.now()).toString(36)
   }
 
   private _clone(target: any) {
@@ -275,18 +282,31 @@ export default class PublicQuery extends Vue {
 
 <style lang="scss" scpoed>
 .query-box {
-  padding: 0 20px 0;
+  .query-form {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    .query-form-item {
+      margin: 0 15px 15px 0;
+      &.btn-box {
+        width: auto;
+      }
+      .el-range-separator {
+        width: auto;
+      }
+    }
+  }
   &.inline-box {
     padding: 20px 20px 0;
-  }
-  .query-form-item {
-    margin: 0 20px 22px 0;
-    display: inline-flex;
-    &.btn-box {
-      width: auto;
-    }
-    .el-range-separator {
-      width: auto;
+    .query-form-item {
+      margin: 0 15px 15px 0;
+      display: inline-flex;
+      &.btn-box {
+        width: auto;
+      }
+      .el-range-separator {
+        width: auto;
+      }
     }
   }
   .el-dropdown-link {

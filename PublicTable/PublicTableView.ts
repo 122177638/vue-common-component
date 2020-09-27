@@ -15,10 +15,11 @@ export default class PublicTableView extends Vue {
   protected getOptions(): ITableOptions {
     return {}
   }
+  /** 高级配置 */
   private options = {
     isScroll: false,
     page: 'page',
-    pageSize: 'pageSize',
+    pageSize: 'limit',
   }
   protected pageData: IPageData = {
     pageSize: 10,
@@ -41,11 +42,11 @@ export default class PublicTableView extends Vue {
   /** 过滤缓存对比key */
   protected ignoreKeys: string[] = []
   /** api接口 */
-  protected queryMethod: TserveApi = null as any
+  protected queryApi: TserveApi = null as any
   /** 下载接口 */
-  protected downloadMethod: TserveApi = null as any
+  protected downloadApi: TserveApi = null as any
   /** 数据处理 返回表格数据 */
-  protected processData(payload: any): any[] {
+  protected handleData(payload: any): any[] {
     return payload || []
   }
   /** 上次请求参数 */
@@ -58,8 +59,8 @@ export default class PublicTableView extends Vue {
   }
   /**
    * @example
-   * onQuery({ page: 1, isUseCache: false}) // 如果是改变表格项长度或者搜索参数修改，由于表格项长度有变化，请求第一页使用
-   * onQuery({ isUseCache: false }) // 如果是修改表格项,会请求当前页 优化用户体验
+   * onQuery({ page: 1, useCache: false}) // 如果是改变表格项长度或者搜索参数修改，由于表格项长度有变化，请求第一页使用
+   * onQuery({ useCache: false }) // 如果是修改表格项,会请求当前页 优化用户体验
    **/
   protected onQuery($pageParams?: number | IOnQueryParams) {
     try {
@@ -74,14 +75,14 @@ export default class PublicTableView extends Vue {
       }
       if (!this.options.isScroll) {
         /** 是否使用缓存 */
-        if (pageParams.isUseCache) {
+        if (pageParams.useCache) {
           const isNewCondition = this._deepCompare(queryParams, this.lastQueryParams, this.ignoreKeys)
           /** 如果参数和上一次一致并过滤page使用缓存，如果缓存中找不到数据重新请求 */
           if (isNewCondition) {
             const cachedata = this.dataCacheMap.get(queryParams[this.options.page])
             if (Array.isArray(cachedata)) {
               this.data = cachedata
-              this.processPageData(cachedata)
+              this.handlePageData(cachedata)
               return
             }
           } else {
@@ -107,26 +108,26 @@ export default class PublicTableView extends Vue {
           this.data = []
         }
       }
-      this.doQuery(queryParams, pageParams.isUseCache!)
+      this.doQuery(queryParams, pageParams.useCache!)
     } catch (error) {
       console.error('table api error', error)
     }
   }
 
-  protected doQuery(queryParams: any, isUseCache: boolean) {
+  protected doQuery(queryParams: any, useCache: boolean) {
     this.toggleLoding()
-    this.queryMethod(queryParams)
-      .then(payload => {
+    this.queryApi(queryParams)
+      .then((payload) => {
         this.onGetQueryResult(payload)
         /** 请求成功后 记录上次请求 */
         this.lastQueryParams = { ...queryParams }
-        if (isUseCache && !this.options.isScroll) this.dataCacheMap.set(queryParams[this.options.page], this.data)
+        if (useCache && !this.options.isScroll) this.dataCacheMap.set(queryParams[this.options.page], this.data)
       })
       .catch(() => {
         this.data = []
         this.pageData.pageCount = 0
         this.clearCacheData()
-        this.processPageData(this.data)
+        this.handlePageData(this.data)
       })
       .finally(() => {
         this.toggleLoding(false)
@@ -134,8 +135,8 @@ export default class PublicTableView extends Vue {
   }
 
   protected onGetQueryResult(payload: any) {
-    const list = this.processData(payload)
-    this.processPageData(list)
+    const list = this.handleData(payload)
+    this.handlePageData(list)
     /** 滚动加载合并数据 */
     if (this.options.isScroll) {
       this.data = this.data.concat(list)
@@ -149,7 +150,7 @@ export default class PublicTableView extends Vue {
     const toString = Object.prototype.toString
     /** 默认参数 */
     let result: IOnQueryParams = {
-      isUseCache: true,
+      useCache: true,
       page: this.pageData.page,
     }
     if (toString.call(pageParams) === '[object Object]') {
@@ -171,8 +172,8 @@ export default class PublicTableView extends Vue {
     if (toString.call(a) !== toString.call(b)) return false
     if (toString.call(a) === '[object Object]') {
       if (
-        Object.keys(a).filter(k => !ignoreKeys || !ignoreKeys.includes(k)).length !==
-        Object.keys(b).filter(k => !ignoreKeys || !ignoreKeys.includes(k)).length
+        Object.keys(a).filter((k) => !ignoreKeys || !ignoreKeys.includes(k)).length !==
+        Object.keys(b).filter((k) => !ignoreKeys || !ignoreKeys.includes(k)).length
       )
         return false
       return Object.entries(a).every(([key, val]) => {
@@ -196,7 +197,7 @@ export default class PublicTableView extends Vue {
     }
   }
   /** 上一页 OR 下一页 按钮禁用处理 */
-  protected processPageData(tableList: any[]) {
+  private handlePageData(tableList: any[]) {
     if (!tableList.length && this.pageData.page > 1) {
       this.pageData.hasPrevPage = true
       this.pageData.hasNextPage = false
@@ -229,9 +230,9 @@ export default class PublicTableView extends Vue {
   }
   /** 下载 */
   protected onDownload() {
-    const loading = this.$loading({})
-    this.downloadMethod(this.getQueryParams(this.queryParams))
-      .then(resp => {
+    const loading = this.$loading({ target: '.app-main' })
+    this.downloadApi(this.getQueryParams(this.queryParams))
+      .then((resp) => {
         try {
           if (/^https?:\/\//.test(resp)) {
             window.open(resp)
@@ -277,7 +278,7 @@ export interface IOnQueryParams {
   /** 跳转页数 */
   page?: number
   /** 有缓存是否使用缓存 默认使用 */
-  isUseCache?: boolean
+  useCache?: boolean
 }
 export interface IPageData {
   /** 数据大小 */

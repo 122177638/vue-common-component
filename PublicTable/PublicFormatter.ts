@@ -1,3 +1,10 @@
+/*
+ * @Author: Anles💯
+ * @Date: 2020-09-27 10:46:53
+ * @LastEditors: Anles💯
+ * @LastEditTime: 2020-09-27 10:47:31
+ * @Description: 👉
+ */
 import { ColumnOptionFormatter, ButtonOptionItem, DropdownOptionItem } from './PublicTable'
 import { formatDate, formatNumber } from '@/utils'
 export function ColumnMapFormatter(map: { [key: string]: any }): ColumnOptionFormatter {
@@ -21,14 +28,14 @@ export function ColumnMapFormatter(map: { [key: string]: any }): ColumnOptionFor
 export function ColumnButtonsFormatter(buttons: ButtonOptionItem[]): ColumnOptionFormatter {
   return (_: any, item: any) => ({
     value: _,
-    buttons: buttons.filter(b => !b.filter || b.filter(item)),
+    buttons: buttons.filter((b) => !b.filter || b.filter(item)),
   })
 }
 
 export function ColumnOptionsFormatter(dropdowns: DropdownOptionItem[]): ColumnOptionFormatter {
   return (_: any, item: any) => ({
     value: _,
-    options: dropdowns.filter(b => !b.filter || b.filter(item)),
+    options: dropdowns.filter((b) => !b.filter || b.filter(item)),
   })
 }
 
